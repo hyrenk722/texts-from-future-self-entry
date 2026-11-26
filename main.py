@@ -10,23 +10,36 @@ import sys
 ENTRY_TEXT = "future you. the gym membership outlived the relationship. cancel one of them."
 
 MAX_CHARS = 200
+MIN_CHARS = 1
+
+
+def validate(text):
+    """Check every gate rule for the entry text; return (ok, reason)."""
+    if not isinstance(text, str):
+        return False, "not text"
+    if len(text) < MIN_CHARS:
+        return False, "empty"
+    if len(text) > MAX_CHARS:
+        return False, "over 200 characters"
+    if not text.strip():
+        return False, "only whitespace"
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return False, "not UTF-8"
+    return True, ""
 
 
 def check_gate(text):
     """Return True when text satisfies the competition gate."""
-    if not isinstance(text, str):
-        return False
-    if len(text) < 1 or len(text) > MAX_CHARS:
-        return False
-    if not text.strip():
-        return False
-    text.encode("utf-8")
-    return True
+    ok, _reason = validate(text)
+    return ok
 
 
 def main():
-    if not check_gate(ENTRY_TEXT):
-        print("gate failed: entry text does not satisfy 1-200 characters", file=sys.stderr)
+    ok, reason = validate(ENTRY_TEXT)
+    if not ok:
+        print(f"gate failed: {reason}", file=sys.stderr)
         return 1
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
     os.makedirs(out_dir, exist_ok=True)
