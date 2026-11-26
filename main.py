@@ -1,57 +1,60 @@
-"""Texts From Your Future Self (u-motasimfuad-texts-from-your-future-self-dd44595e).
+"""Texts From Your Future Self -- entry program.
 
-Writes one text message from the writer's future self to /output/entry.txt.
-Gate: UTF-8 text, 1 to 200 characters, not only whitespace.
+Writes the one-liner the writer's future self sends back, as plain
+UTF-8 text, to entry.txt in the grader's output directory. Before
+anything is written the line is put through the competition's gate:
+it must be real text (not empty, not whitespace-only), no longer
+than 200 characters, and encodable as UTF-8.
 """
 
 import os
 import sys
 
-ENTRY_TEXT = "yes, you still rehearse arguments in the shower. no, you never win them."
+TEXT = "yes, you still rehearse arguments in the shower. no, you never win them."
 
-MAX_CHARS = 200
-MIN_CHARS = 1
+MAX_LEN = 200
 
 
-def validate(text):
-    """Check every gate rule for the entry text; return (ok, reason)."""
-    if not isinstance(text, str):
-        return False, "not text"
-    if len(text) < MIN_CHARS:
-        return False, "empty"
-    if len(text) > MAX_CHARS:
-        return False, "over 200 characters"
-    if not text.strip():
-        return False, "only whitespace"
+def check_text(line):
+    """True when line clears every gate rule; False otherwise."""
+    if not isinstance(line, str):
+        return False
+    if line.strip() == "":
+        return False
+    if len(line) > MAX_LEN:
+        return False
     try:
-        text.encode("utf-8")
+        line.encode("utf-8")
     except UnicodeEncodeError:
-        return False, "not UTF-8"
-    return True, ""
+        return False
+    return True
 
 
-def check_gate(text):
-    """Return True when text satisfies the competition gate."""
-    ok, _reason = validate(text)
-    return ok
+def verify_bytes(path, line):
+    """True when the file at path holds exactly line as UTF-8 bytes."""
+    with open(path, "rb") as handle:
+        return handle.read() == line.encode("utf-8")
+
+
+def emit(line, folder):
+    """Drop line into entry.txt under folder; return the file path."""
+    path = os.path.join(folder, "entry.txt")
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(line)
+    return path
 
 
 def main():
-    ok, reason = validate(ENTRY_TEXT)
-    if not ok:
-        print(f"gate failed: {reason}", file=sys.stderr)
+    if not check_text(TEXT):
+        print("gate failed: entry text does not pass the house gate", file=sys.stderr)
         return 1
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
-    os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, "entry.txt")
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(ENTRY_TEXT)
-    with open(out_path, "rb") as f:
-        written = f.read()
-    if written != ENTRY_TEXT.encode("utf-8"):
-        print("verify failed: written bytes do not match entry text", file=sys.stderr)
+    folder = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    os.makedirs(folder, exist_ok=True)
+    path = emit(TEXT, folder)
+    if not verify_bytes(path, TEXT):
+        print("verify failed: entry.txt does not match the entry text", file=sys.stderr)
         return 1
-    print(f"wrote {out_path} ({len(ENTRY_TEXT)} chars)")
+    print(f"wrote {path} ({len(TEXT)} chars)")
     return 0
 
 
