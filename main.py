@@ -7,7 +7,7 @@ Gate: UTF-8 text, 1 to 200 characters, not only whitespace.
 import os
 import sys
 
-ENTRY_TEXT = "future you. the gym membership outlived the relationship. cancel one of them."
+ENTRY_TEXT = "yes, you still rehearse arguments in the shower. no, you never win them."
 
 MAX_CHARS = 200
 MIN_CHARS = 1
